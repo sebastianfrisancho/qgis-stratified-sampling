@@ -1,0 +1,5 @@
+# No external pip packages are required.
+# This script uses Python's standard library and the QGIS Python API (PyQGIS).
+# Ensure you run this script within the QGIS 3.x Python Console or a QGIS-configured environment.
+
+qgis>=3.0.0
