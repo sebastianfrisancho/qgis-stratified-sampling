@@ -35,6 +35,7 @@ from qgis.core import (
     QgsFeature,
     QgsProject,
     QgsVectorLayer,
+    QgsWkbTypes,
 )
 
 
@@ -70,10 +71,31 @@ def stratified_random_sampling():
 
     print(f"Input layer: {LAYER_NAME}")
 
-    try:
-        layer = QgsProject.instance().mapLayersByName(LAYER_NAME)[0]
-    except IndexError:
+    matches = QgsProject.instance().mapLayersByName(LAYER_NAME)
+    if not matches:
         print(f"ERROR: Layer '{LAYER_NAME}' not found.")
+        return
+    layer = matches[0]
+
+    if not layer.isValid():
+        print(f"ERROR: Layer '{LAYER_NAME}' is invalid.")
+        return
+    if layer.geometryType() != QgsWkbTypes.PointGeometry or QgsWkbTypes.isMultiType(layer.wkbType()):
+        print("ERROR: Input layer must contain single-part point geometries.")
+        return
+
+    # Validate quotas before reading features.
+    if not TARGET_SAMPLE:
+        print("ERROR: TARGET_SAMPLE must contain at least one category.")
+        return
+    for category, amount in TARGET_SAMPLE.items():
+        if not isinstance(amount, int) or isinstance(amount, bool) or amount < 0:
+            print(f"ERROR: Sample size for '{category}' must be a non-negative integer.")
+            return
+
+    normalized_targets = [str(key).strip().casefold() for key in TARGET_SAMPLE]
+    if len(normalized_targets) != len(set(normalized_targets)):
+        print("ERROR: TARGET_SAMPLE contains duplicate categories after case/space normalization.")
         return
 
     # Check if the class column exists
@@ -84,14 +106,18 @@ def stratified_random_sampling():
     print("Reading features and grouping by category...")
 
     features_by_class = {
-	key.lower(): [] 
-	for key in TARGET_SAMPLE.keys()}
+        str(key).strip().casefold(): []
+        for key in TARGET_SAMPLE.keys()
+    }
 
     for feature in layer.getFeatures():
         if not feature.hasGeometry() or feature.geometry().isEmpty():
             continue
 
-        feature_class = str(feature[CLASS_COLUMN]).lower().strip()
+        raw_class = feature[CLASS_COLUMN]
+        if raw_class is None:
+            continue
+        feature_class = str(raw_class).strip().casefold()
 
         if feature_class in features_by_class:
             features_by_class[feature_class].append(feature)
@@ -100,7 +126,7 @@ def stratified_random_sampling():
     selected_features = []
 
     for target_class, required_amount in TARGET_SAMPLE.items():
-        class_key = target_class.lower()
+        class_key = str(target_class).strip().casefold()
         candidate_features = features_by_class[class_key]
         total_available = len(candidate_features)
 
@@ -133,11 +159,11 @@ def stratified_random_sampling():
 
     print("Creating output layer...")
     layer_crs = layer.crs()
-    out_layer = QgsVectorLayer(
-        f"Point?crs={layer_crs.authid()}",
-        OUTPUT_NAME,
-        "memory",
-    )
+    out_layer = QgsVectorLayer("Point", OUTPUT_NAME, "memory")
+    out_layer.setCrs(layer_crs)
+    if not out_layer.isValid():
+        print("ERROR: Could not create the output memory layer.")
+        return
     provider = out_layer.dataProvider()
 
     provider.addAttributes(layer.fields().toList())
@@ -151,7 +177,10 @@ def stratified_random_sampling():
         new_features.append(new_feature)
 
     # Copy selected features into the output layer.
-    provider.addFeatures(new_features)
+    success, _ = provider.addFeatures(new_features)
+    if not success:
+        print("ERROR: QGIS could not add all selected features to the output layer.")
+        return
     out_layer.updateExtents()
     QgsProject.instance().addMapLayer(out_layer)
 
