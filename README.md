@@ -76,6 +76,9 @@ The output preserves all original attributes and geometries.
 
 Biologist specializing in Remote Sensing, LiDAR and Forest Ecology.
 
+- **GitHub:** [@sebastianfrisancho](https://github.com/sebastianfrisancho)
+- **LinkedIn:** [Sebastian Frisancho](https://www.linkedin.com/in/sebastianfrisancho/)
+
 Remote Sensing | LiDAR | Forest Ecology | GIS | Python
 
 ---
