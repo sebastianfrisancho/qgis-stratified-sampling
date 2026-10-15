@@ -67,6 +67,10 @@ def stratified_random_sampling():
         "Primary Forest": 5,
         "Secondary Forest": 5,
     }
+
+    # Set an integer (e.g., 42) to make random selection repeatable.
+    # Keep None to use a different random sequence on each run.
+    RANDOM_SEED = None
     # =============================================================================
 
     print(f"Input layer: {LAYER_NAME}")
@@ -123,6 +127,7 @@ def stratified_random_sampling():
             features_by_class[feature_class].append(feature)
 
     print("Performing random sampling...")
+    rng = random.Random(RANDOM_SEED)
     selected_features = []
 
     for target_class, required_amount in TARGET_SAMPLE.items():
@@ -143,7 +148,7 @@ def stratified_random_sampling():
             selected_class_features = candidate_features
         else:
             # Randomly select the required number of features.
-            selected_class_features = random.sample(
+            selected_class_features = rng.sample(
                 candidate_features, required_amount
             )
 
