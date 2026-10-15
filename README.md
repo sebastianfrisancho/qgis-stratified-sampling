@@ -45,6 +45,7 @@ Before running the script, edit the following variables:
 LAYER_NAME
 CLASS_COLUMN
 TARGET_SAMPLE
+RANDOM_SEED
 ```
 
 Example:
@@ -54,6 +55,9 @@ TARGET_SAMPLE = {
     "Primary Forest": 5,
     "Secondary Forest": 5
 }
+
+# Optional: use an integer to reproduce the same random sequence.
+RANDOM_SEED = 42
 ```
 
 ---
@@ -66,7 +70,7 @@ The script creates a new QGIS memory layer called:
 Selected_Points
 ```
 
-The output preserves all original attributes and geometries.
+The output preserves all original attributes and geometries. If a category has fewer features than requested, all available features in that category are selected. Set `RANDOM_SEED` to an integer to make the random selection repeatable for the same input data and feature ordering; use `None` for a different random sequence each run.
 
 ---
 
@@ -75,6 +79,9 @@ The output preserves all original attributes and geometries.
 **Sebastian Frisancho**
 
 Biologist specializing in Remote Sensing, LiDAR and Forest Ecology.
+
+- **GitHub:** [@sebastianfrisancho](https://github.com/sebastianfrisancho)
+- **LinkedIn:** [Sebastian Frisancho](https://www.linkedin.com/in/sebastianfrisancho/)
 
 Remote Sensing | LiDAR | Forest Ecology | GIS | Python
 
